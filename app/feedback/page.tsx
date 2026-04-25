@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase, Branch } from '@/lib/supabase'
 
-export default function FeedbackPage() {
+function FeedbackPageContent() {
   const searchParams = useSearchParams()
   const branchId = searchParams.get('branch')
   
@@ -244,5 +244,13 @@ export default function FeedbackPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function FeedbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
+      <FeedbackPageContent />
+    </Suspense>
   )
 }
