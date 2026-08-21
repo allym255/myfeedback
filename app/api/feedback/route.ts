@@ -3,98 +3,90 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+function getShift() {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12) return 'morning'
+  if (hour >= 12 && hour < 17) return 'afternoon'
+  return 'evening'
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
-    // Validate required fields
-    const requiredFields = ['branch_id', 'overall_rating', 'service_speed', 'staff_friendliness', 'cleanliness', 'shift']
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { error: `Missing required field: ${field}` },
-          { status: 400 }
-        )
-      }
+    const { branch_id, overall_rating, service_speed, staff_friendliness, cleanliness, comment } = body
+
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
+
+    // Block repeat submissions from the same IP for the same branch within 1 hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+
+    const { data: recent, error: checkError } = await supabase
+      .from('feedback')
+      .select('id')
+      .eq('branch_id', branch_id)
+      .eq('ip_address', ip)
+      .gte('created_at', oneHourAgo)
+
+    if (checkError) throw checkError
+
+    if (recent && recent.length > 0) {
+      return NextResponse.json(
+        { error: 'Only one review per hour is allowed for this location.' },
+        { status: 429 }
+      )
     }
 
-    // Validate ratings
-    const ratings = ['overall_rating', 'service_speed', 'staff_friendliness', 'cleanliness']
-    for (const rating of ratings) {
-      if (body[rating] < 1 || body[rating] > 5) {
-        return NextResponse.json(
-          { error: `${rating} must be between 1 and 5` },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Insert feedback
     const { data, error } = await supabase
       .from('feedback')
-      .insert([body])
+      .insert([
+        {
+          branch_id,
+          overall_rating,
+          service_speed,
+          staff_friendliness,
+          cleanliness,
+          comment: comment?.trim() || null,
+          shift: getShift(),
+          ip_address: ip,
+          user_agent: request.headers.get('user-agent') || null,
+        },
+      ])
       .select()
-      .single()
 
     if (error) throw error
 
-    // Check if negative feedback - trigger alert
-    if (body.overall_rating <= 2) {
-      // TODO: Implement email/SMS alert
-      console.log('🚨 NEGATIVE FEEDBACK ALERT:', data)
-    }
-
-    return NextResponse.json({
-      success: true,
-      data
-    })
+    return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error('Error submitting feedback:', error)
-    return NextResponse.json(
-      { error: 'Failed to submit feedback' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const branchId = searchParams.get('branch_id')
-    const lowRating = searchParams.get('low_rating') === 'true'
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const { searchParams } = new URL(request.url)
+    const branch_id = searchParams.get('branch_id')
+    const low_rating = searchParams.get('low_rating')
+    const limit = searchParams.get('limit')
 
     let query = supabase
       .from('feedback')
-      .select(`
-        *,
-        branches (*)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
-      .limit(limit)
 
-    if (branchId) {
-      query = query.eq('branch_id', branchId)
-    }
-
-    if (lowRating) {
-      query = query.lte('overall_rating', 2)
-    }
+    if (branch_id) query = query.eq('branch_id', branch_id)
+    if (low_rating === 'true') query = query.lte('overall_rating', 2)
+    if (limit) query = query.limit(parseInt(limit))
 
     const { data, error } = await query
-
     if (error) throw error
 
-    return NextResponse.json({
-      success: true,
-      data,
-      count: data?.length || 0
-    })
+    return NextResponse.json({ data })
   } catch (error) {
     console.error('Error fetching feedback:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch feedback' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 })
   }
 }
