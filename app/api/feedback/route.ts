@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
       request.headers.get('x-real-ip') ||
       'unknown'
 
-    // Block repeat submissions from the same IP for the same branch within 1 hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
 
     const { data: recent, error: checkError } = await supabase
