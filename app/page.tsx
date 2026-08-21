@@ -1,33 +1,40 @@
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
+import Link from 'next/link'
 
-    try {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          branch_id: branchId,
-          overall_rating: ratings.overall,
-          service_speed: ratings.speed,
-          staff_friendliness: ratings.staff,
-          cleanliness: ratings.clean,
-          comment: comment.trim() || null
-        })
-      })
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center px-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Localizer</h1>
+          <p className="text-gray-600">Customer feedback made simple</p>
+        </div>
 
-      const result = await response.json()
+        <div className="space-y-4">
+          <Link
+            href="/feedback?branch=123e4567-e89b-12d3-a456-426614174000"
+            className="block bg-white border border-gray-200 rounded-xl p-6 hover:border-primary-500 transition-colors"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Customer Feedback</h2>
+            <p className="text-sm text-gray-600">Submit a feedback form (usually opened via QR code)</p>
+          </Link>
 
-      if (!response.ok) {
-        alert(result.error || 'Failed to submit feedback. Please try again.')
-        return
-      }
+          <Link
+            href="/dashboard"
+            className="block bg-white border border-gray-200 rounded-xl p-6 hover:border-primary-500 transition-colors"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Manager Dashboard</h2>
+            <p className="text-sm text-gray-600">View analytics and recent feedback</p>
+          </Link>
 
-      setSubmitted(true)
-    } catch (error) {
-      console.error('Error submitting feedback:', error)
-      alert('Failed to submit feedback. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+          <Link
+            href="/admin/qr-codes"
+            className="block bg-white border border-gray-200 rounded-xl p-6 hover:border-primary-500 transition-colors"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">QR Codes</h2>
+            <p className="text-sm text-gray-600">Generate and download QR codes per branch</p>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
