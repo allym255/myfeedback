@@ -7,12 +7,12 @@ import { supabase, Branch } from '@/lib/supabase'
 function FeedbackPageContent() {
   const searchParams = useSearchParams()
   const branchId = searchParams.get('branch')
-  
+
   const [branch, setBranch] = useState<Branch | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  
+
   const [ratings, setRatings] = useState({
     overall: 0,
     speed: 0,
@@ -44,34 +44,31 @@ function FeedbackPageContent() {
     }
   }
 
-  const getShift = () => {
-    const hour = new Date().getHours()
-    if (hour >= 5 && hour < 12) return 'morning'
-    if (hour >= 12 && hour < 17) return 'afternoon'
-    return 'evening'
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
 
     try {
-      const { error } = await supabase
-        .from('feedback')
-        .insert([
-          {
-            branch_id: branchId,
-            overall_rating: ratings.overall,
-            service_speed: ratings.speed,
-            staff_friendliness: ratings.staff,
-            cleanliness: ratings.clean,
-            comment: comment.trim() || null,
-            shift: getShift()
-          }
-        ])
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branch_id: branchId,
+          overall_rating: ratings.overall,
+          service_speed: ratings.speed,
+          staff_friendliness: ratings.staff,
+          cleanliness: ratings.clean,
+          comment: comment.trim() || null
+        })
+      })
 
-      if (error) throw error
-      
+      const result = await response.json()
+
+      if (!response.ok) {
+        alert(result.error || 'Failed to submit feedback. Please try again.')
+        return
+      }
+
       setSubmitted(true)
     } catch (error) {
       console.error('Error submitting feedback:', error)
@@ -85,17 +82,17 @@ function FeedbackPageContent() {
     return ratings.overall > 0 && ratings.speed > 0 && ratings.staff > 0 && ratings.clean > 0
   }
 
-  const StarRating = ({ 
-    value, 
-    onChange, 
-    label 
-  }: { 
+  const StarRating = ({
+    value,
+    onChange,
+    label
+  }: {
     value: number
     onChange: (val: number) => void
-    label: string 
+    label: string
   }) => {
     const [hover, setHover] = useState(0)
-    
+
     return (
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-900 mb-3">
