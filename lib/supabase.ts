@@ -10,6 +10,7 @@ export interface Branch {
   id: string
   name: string
   location: string
+  brand_color?: string
   created_at: string
 }
 
