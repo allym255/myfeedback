@@ -82,6 +82,8 @@ function FeedbackPageContent() {
     return ratings.overall > 0 && ratings.speed > 0 && ratings.staff > 0 && ratings.clean > 0
   }
 
+  const brandColor = branch?.brand_color || '#1D9E75'
+
   const StarRating = ({
     value,
     onChange,
@@ -107,6 +109,7 @@ function FeedbackPageContent() {
               onMouseEnter={() => setHover(star)}
               onMouseLeave={() => setHover(0)}
               className="text-4xl transition-transform hover:scale-110 focus:outline-none"
+              style={star <= (hover || value) ? { color: brandColor } : { color: '#D1D5DB' }}
             >
               {star <= (hover || value) ? '★' : '☆'}
             </button>
@@ -125,7 +128,7 @@ function FeedbackPageContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -145,7 +148,7 @@ function FeedbackPageContent() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
+      <div className="min-h-screen bg-gray-50">
         <div className="max-w-md mx-auto px-4 py-16">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -163,7 +166,8 @@ function FeedbackPageContent() {
                 setRatings({ overall: 0, speed: 0, staff: 0, clean: 0 })
                 setComment('')
               }}
-              className="text-primary-600 hover:text-primary-700 font-medium"
+              className="font-medium"
+              style={{ color: brandColor }}
             >
               Submit Another Response
             </button>
@@ -174,12 +178,15 @@ function FeedbackPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-8 px-4">
+    <div className="min-h-screen bg-gray-50">
+      <div
+        className="text-white py-8 px-4"
+        style={{ backgroundColor: brandColor }}
+      >
         <div className="max-w-md mx-auto text-center">
           <h1 className="text-2xl font-bold mb-2">Share Your Experience</h1>
-          <p className="text-primary-100">{branch.name}</p>
-          <p className="text-sm text-primary-200">{branch.location}</p>
+          <p className="text-white/80">{branch.name}</p>
+          <p className="text-sm text-white/70">{branch.location}</p>
         </div>
       </div>
 
@@ -227,14 +234,19 @@ function FeedbackPageContent() {
               placeholder="Tell us more about your experience..."
               maxLength={500}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent resize-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={!isFormValid() || submitting}
-            className="w-full bg-primary-600 text-white py-4 rounded-lg font-medium hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full text-white py-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            style={
+              isFormValid() && !submitting
+                ? { backgroundColor: brandColor }
+                : undefined
+            }
           >
             {submitting ? 'Submitting...' : 'Submit Feedback'}
           </button>
