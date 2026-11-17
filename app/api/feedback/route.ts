@@ -1,10 +1,18 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 function getShift() {
-  const hour = new Date().getHours()
+  const hour =
+    parseInt(
+      new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        hour12: false,
+        timeZone: 'Asia/Dubai',
+      }).format(new Date()),
+      10
+    ) % 24
   if (hour >= 5 && hour < 12) return 'morning'
   if (hour >= 12 && hour < 17) return 'afternoon'
   return 'evening'
@@ -12,8 +20,37 @@ function getShift() {
 
 export async function POST(request: NextRequest) {
   try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !serviceKey) {
+      return NextResponse.json({ error: 'Server is not configured' }, { status: 500 })
+    }
+    const admin = createClient(url, serviceKey)
+
     const body = await request.json()
-    const { branch_id, overall_rating, service_speed, staff_friendliness, cleanliness, comment } = body
+    const {
+      branch_id,
+      overall_rating,
+      service_speed,
+      staff_friendliness,
+      cleanliness,
+      comment,
+    } = body
+
+    const ratings = [overall_rating, service_speed, staff_friendliness, cleanliness]
+    if (!branch_id || ratings.some((r) => !Number.isInteger(r) || r < 1 || r > 5)) {
+      return NextResponse.json({ error: 'Invalid feedback' }, { status: 400 })
+    }
+
+    const { data: branch } = await admin
+      .from('branches')
+      .select('id')
+      .eq('id', branch_id)
+      .maybeSingle()
+
+    if (!branch) {
+      return NextResponse.json({ error: 'Branch not found' }, { status: 404 })
+    }
 
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
@@ -21,8 +58,7 @@ export async function POST(request: NextRequest) {
       'unknown'
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-
-    const { data: recent, error: checkError } = await supabase
+    const { data: recent, error: checkError } = await admin
       .from('feedback')
       .select('id')
       .eq('branch_id', branch_id)
@@ -38,54 +74,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { data, error } = await supabase
-      .from('feedback')
-      .insert([
-        {
-          branch_id,
-          overall_rating,
-          service_speed,
-          staff_friendliness,
-          cleanliness,
-          comment: comment?.trim() || null,
-          shift: getShift(),
-          ip_address: ip,
-          user_agent: request.headers.get('user-agent') || null,
-        },
-      ])
-      .select()
+    const { error } = await admin.from('feedback').insert([
+      {
+        branch_id,
+        overall_rating,
+        service_speed,
+        staff_friendliness,
+        cleanliness,
+        comment: typeof comment === 'string' ? comment.trim().slice(0, 500) || null : null,
+        shift: getShift(),
+        ip_address: ip,
+        user_agent: request.headers.get('user-agent') || null,
+      },
+    ])
 
     if (error) throw error
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error submitting feedback:', error)
     return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 })
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const branch_id = searchParams.get('branch_id')
-    const low_rating = searchParams.get('low_rating')
-    const limit = searchParams.get('limit')
-
-    let query = supabase
-      .from('feedback')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (branch_id) query = query.eq('branch_id', branch_id)
-    if (low_rating === 'true') query = query.lte('overall_rating', 2)
-    if (limit) query = query.limit(parseInt(limit))
-
-    const { data, error } = await query
-    if (error) throw error
-
-    return NextResponse.json({ data })
-  } catch (error) {
-    console.error('Error fetching feedback:', error)
-    return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 })
   }
 }
