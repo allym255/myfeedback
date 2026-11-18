@@ -18,6 +18,7 @@ type BranchRow = {
   location: string | null
   company_id: string | null
   brand_color: string | null
+  logo_url: string | null
 }
 
 export default function AdminBranchesPage() {
@@ -42,7 +43,7 @@ export default function AdminBranchesPage() {
       .order('name')
     const { data: branchData } = await supabase
       .from('branches')
-      .select('id, name, location, company_id, brand_color')
+      .select('id, name, location, company_id, brand_color, logo_url')
       .order('name')
 
     const companyRows = (companyData ?? []) as unknown as CompanyRow[]
@@ -154,6 +155,64 @@ export default function AdminBranchesPage() {
     setBusy(false)
   }
 
+  const uploadLogo = async (branch: BranchRow, file: File | undefined) => {
+    if (!file) return
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setMessage('Logo must be a PNG, JPG or WebP image.')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage('Logo must be smaller than 2 MB.')
+      return
+    }
+
+    setBusy(true)
+    setMessage('Uploading logo...')
+    const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+    const path = branch.id + '/' + Date.now() + '.' + ext
+
+    const { error: uploadError } = await supabase.storage
+      .from('logos')
+      .upload(path, file, { contentType: file.type })
+
+    if (uploadError) {
+      setMessage('Could not upload logo: ' + uploadError.message)
+      setBusy(false)
+      return
+    }
+
+    const { data: publicData } = supabase.storage.from('logos').getPublicUrl(path)
+    const { error: updateError } = await supabase
+      .from('branches')
+      .update({ logo_url: publicData.publicUrl })
+      .eq('id', branch.id)
+
+    if (updateError) {
+      setMessage('Could not save logo: ' + updateError.message)
+    } else {
+      setMessage('Logo saved.')
+      await loadData()
+    }
+    setBusy(false)
+  }
+
+  const removeLogo = async (branch: BranchRow) => {
+    setBusy(true)
+    setMessage('')
+    const { error } = await supabase
+      .from('branches')
+      .update({ logo_url: null })
+      .eq('id', branch.id)
+    if (error) {
+      setMessage('Could not remove logo: ' + error.message)
+    } else {
+      setMessage('Logo removed.')
+      await loadData()
+    }
+    setBusy(false)
+  }
+
   if (loading) {
     return <div className="p-8">Loading...</div>
   }
@@ -175,8 +234,8 @@ export default function AdminBranchesPage() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Manage branches</h1>
-        <Link href="/dashboard" className="text-primary-600 font-medium">
-          Back to dashboard
+        <Link href="/admin" className="text-primary-600 font-medium">
+          Back to overview
         </Link>
       </div>
 
@@ -261,6 +320,43 @@ export default function AdminBranchesPage() {
             <div key={branch.id} className="bg-white p-6 rounded-lg border">
               <h3 className="text-lg font-bold">{branch.name}</h3>
               <p className="text-gray-600 mb-3">{branch.location}</p>
+
+              <div className="mb-4 rounded border p-3 bg-gray-50">
+                <p className="text-xs text-gray-500 mb-2">Logo</p>
+                {branch.logo_url ? (
+                  <div className="flex items-center justify-between gap-3">
+                    {/* eslint-disable-next-line */}
+                    <img
+                      src={branch.logo_url}
+                      alt="Logo"
+                      className="max-h-14 max-w-[140px] object-contain"
+                    />
+                    <button
+                      onClick={() => removeLogo(branch)}
+                      disabled={busy}
+                      className="text-xs text-red-600"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 mb-2">No logo yet</p>
+                )}
+                <label className="block mt-2 text-sm text-primary-600 font-medium cursor-pointer">
+                  {branch.logo_url ? 'Replace logo' : 'Upload logo'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    disabled={busy}
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files ? e.target.files[0] : undefined
+                      e.target.value = ''
+                      uploadLogo(branch, file)
+                    }}
+                  />
+                </label>
+              </div>
 
               {/* eslint-disable-next-line */}
               <img src={qrUrl} alt="QR Code" className="mb-3" />
