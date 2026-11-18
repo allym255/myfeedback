@@ -193,6 +193,9 @@ export default function AdminOverviewPage() {
             <p className="text-sm text-gray-600">All companies, last 30 days</p>
           </div>
           <div className="flex items-center gap-4 text-sm">
+            <Link href="/admin/new-client" className="text-primary-600 font-medium">
+              Add client
+            </Link>
             <Link href="/admin/branches" className="text-primary-600 font-medium">
               Manage branches
             </Link>
