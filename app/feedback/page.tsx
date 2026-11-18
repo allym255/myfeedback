@@ -1,252 +1,210 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { supabase, Branch } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
-function FeedbackPageContent() {
+type BranchInfo = {
+  id: string
+  name: string
+  location: string | null
+  brand_color: string | null
+  logo_url: string | null
+}
+
+const LABELS = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
+
+function StarRow({
+  title,
+  value,
+  onChange,
+  color,
+}: {
+  title: string
+  value: number
+  onChange: (n: number) => void
+  color: string
+}) {
+  return (
+    <div className="py-5 border-b border-gray-100 last:border-b-0">
+      <p className="font-medium text-gray-900 mb-3">{title}</p>
+      <div className="flex justify-center gap-2">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n)}
+            aria-label={n + ' stars'}
+            className="text-4xl leading-none p-1"
+            style={{ color: n <= value ? color : '#D1D5DB' }}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <p className="text-center text-sm text-gray-600 mt-2">{LABELS[value]}</p>
+    </div>
+  )
+}
+
+function FeedbackForm() {
   const searchParams = useSearchParams()
   const branchId = searchParams.get('branch')
 
-  const [branch, setBranch] = useState<Branch | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [branch, setBranch] = useState<BranchInfo | null | undefined>(undefined)
+  const [overall, setOverall] = useState(5)
+  const [speed, setSpeed] = useState(5)
+  const [staff, setStaff] = useState(5)
+  const [clean, setClean] = useState(5)
+  const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-
-  const [ratings, setRatings] = useState({
-    overall: 0,
-    speed: 0,
-    staff: 0,
-    clean: 0
-  })
-  const [comment, setComment] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (branchId) {
-      fetchBranch()
+    let cancelled = false
+
+    const load = async () => {
+      if (!branchId) {
+        setBranch(null)
+        return
+      }
+      const { data } = await supabase
+        .from('branches')
+        .select('id, name, location, brand_color, logo_url')
+        .eq('id', branchId)
+        .maybeSingle()
+
+      if (cancelled) return
+      setBranch(data ? (data as unknown as BranchInfo) : null)
+    }
+
+    load()
+    return () => {
+      cancelled = true
     }
   }, [branchId])
 
-  const fetchBranch = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('branches')
-        .select('*')
-        .eq('id', branchId)
-        .single()
-
-      if (error) throw error
-      setBranch(data)
-    } catch (error) {
-      console.error('Error fetching branch:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-
-    try {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          branch_id: branchId,
-          overall_rating: ratings.overall,
-          service_speed: ratings.speed,
-          staff_friendliness: ratings.staff,
-          cleanliness: ratings.clean,
-          comment: comment.trim() || null
-        })
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        alert(result.error || 'Failed to submit feedback. Please try again.')
-        return
-      }
-
-      setSubmitted(true)
-    } catch (error) {
-      console.error('Error submitting feedback:', error)
-      alert('Failed to submit feedback. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const isFormValid = () => {
-    return ratings.overall > 0 && ratings.speed > 0 && ratings.staff > 0 && ratings.clean > 0
-  }
-
-  const brandColor = branch?.brand_color || '#1D9E75'
-
-  const StarRating = ({
-    value,
-    onChange,
-    label
-  }: {
-    value: number
-    onChange: (val: number) => void
-    label: string
-  }) => {
-    const [hover, setHover] = useState(0)
-
-    return (
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-900 mb-3">
-          {label}
-        </label>
-        <div className="flex justify-center gap-2">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => onChange(star)}
-              onMouseEnter={() => setHover(star)}
-              onMouseLeave={() => setHover(0)}
-              className="text-4xl transition-transform hover:scale-110 focus:outline-none"
-              style={star <= (hover || value) ? { color: brandColor } : { color: '#D1D5DB' }}
-            >
-              {star <= (hover || value) ? '★' : '☆'}
-            </button>
-          ))}
-        </div>
-        {value > 0 && (
-          <p className="text-center text-sm text-gray-600 mt-2">
-            {['Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][value - 1]}
-          </p>
-        )}
-      </div>
-    )
-  }
-
-  if (loading) {
+  if (branch === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+        <p className="text-gray-600">Loading...</p>
       </div>
     )
   }
 
-  if (!branch) {
+  if (branch === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Branch Not Found</h1>
-          <p className="text-gray-600">Please scan a valid QR code</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <p className="text-gray-700 text-center">This feedback link is not valid.</p>
       </div>
     )
   }
+
+  const color = branch.brand_color || '#1D9E75'
+
+  const header = (
+    <div className="px-6 py-8 text-center text-white" style={{ backgroundColor: color }}>
+      {branch.logo_url && (
+        <div className="inline-block bg-white rounded-xl p-3 mb-4">
+          {/* eslint-disable-next-line */}
+          <img
+            src={branch.logo_url}
+            alt={branch.name}
+            className="max-h-16 max-w-[200px] object-contain"
+          />
+        </div>
+      )}
+      <h1 className="text-2xl font-bold">{branch.name}</h1>
+      {branch.location && <p className="text-sm opacity-90 mt-1">{branch.location}</p>}
+    </div>
+  )
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-md mx-auto px-4 py-16">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
-            <p className="text-gray-600 mb-8">
-              Your feedback helps us serve you better. We appreciate you taking the time.
-            </p>
-            <button
-              onClick={() => {
-                setSubmitted(false)
-                setRatings({ overall: 0, speed: 0, staff: 0, clean: 0 })
-                setComment('')
-              }}
-              className="font-medium"
-              style={{ color: brandColor }}
+      <div className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow overflow-hidden">
+          {header}
+          <div className="px-6 py-10 text-center">
+            <div
+              className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center text-white text-3xl"
+              style={{ backgroundColor: color }}
             >
-              Submit Another Response
-            </button>
+              ✓
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Thank you!</h2>
+            <p className="text-gray-600">Your feedback helps us improve.</p>
           </div>
         </div>
       </div>
     )
   }
 
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branch_id: branch.id,
+          overall_rating: overall,
+          service_speed: speed,
+          staff_friendliness: staff,
+          cleanliness: clean,
+          comment: comment.trim(),
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Something went wrong. Please try again.')
+        setSubmitting(false)
+        return
+      }
+
+      setSubmitted(true)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    }
+    setSubmitting(false)
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div
-        className="text-white py-8 px-4"
-        style={{ backgroundColor: brandColor }}
-      >
-        <div className="max-w-md mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-2">Share Your Experience</h1>
-          <p className="text-white/80">{branch.name}</p>
-          <p className="text-sm text-white/70">{branch.location}</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="max-w-md mx-auto bg-white rounded-2xl shadow overflow-hidden">
+        {header}
 
-      <div className="max-w-md mx-auto px-4 py-8">
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-6">
-          <StarRating
-            label="Overall Experience"
-            value={ratings.overall}
-            onChange={(val) => setRatings({ ...ratings, overall: val })}
-          />
+        <form onSubmit={submit} className="px-6 pb-6 pt-2">
+          <StarRow title="Overall Experience" value={overall} onChange={setOverall} color={color} />
+          <StarRow title="Service Speed" value={speed} onChange={setSpeed} color={color} />
+          <StarRow title="Staff Friendliness" value={staff} onChange={setStaff} color={color} />
+          <StarRow title="Cleanliness" value={clean} onChange={setClean} color={color} />
 
-          <div className="border-t border-gray-100 my-6"></div>
-
-          <StarRating
-            label="Service Speed"
-            value={ratings.speed}
-            onChange={(val) => setRatings({ ...ratings, speed: val })}
-          />
-
-          <div className="border-t border-gray-100 my-6"></div>
-
-          <StarRating
-            label="Staff Friendliness"
-            value={ratings.staff}
-            onChange={(val) => setRatings({ ...ratings, staff: val })}
-          />
-
-          <div className="border-t border-gray-100 my-6"></div>
-
-          <StarRating
-            label="Cleanliness"
-            value={ratings.clean}
-            onChange={(val) => setRatings({ ...ratings, clean: val })}
-          />
-
-          <div className="border-t border-gray-100 my-6"></div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+          <div className="py-5">
+            <label className="block font-medium text-gray-900 mb-2">
               Additional Comments (Optional)
             </label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Tell us more about your experience..."
               maxLength={500}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent resize-none"
+              placeholder="Tell us more about your experience..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
             />
           </div>
 
+          {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+
           <button
             type="submit"
-            disabled={!isFormValid() || submitting}
-            className="w-full text-white py-4 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            style={
-              isFormValid() && !submitting
-                ? { backgroundColor: brandColor }
-                : undefined
-            }
+            disabled={submitting}
+            className="w-full text-white py-3 rounded-lg font-semibold disabled:opacity-60"
+            style={{ backgroundColor: color }}
           >
             {submitting ? 'Submitting...' : 'Submit Feedback'}
           </button>
@@ -258,8 +216,14 @@ function FeedbackPageContent() {
 
 export default function FeedbackPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
-      <FeedbackPageContent />
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      }
+    >
+      <FeedbackForm />
     </Suspense>
   )
 }
