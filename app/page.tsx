@@ -33,6 +33,9 @@ export default function HomePage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-1">QR Codes</h2>
             <p className="text-sm text-gray-600">Generate and download QR codes per branch</p>
           </Link>
+            <Link href="/account" className="text-primary-600 font-medium">
+              Account
+            </Link>
         </div>
       </div>
     </div>
