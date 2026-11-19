@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -60,8 +61,14 @@ export default function LoginPage() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded px-3 py-2 mb-4"
+          className="w-full border rounded px-3 py-2 mb-2"
         />
+
+        <div className="text-right mb-4">
+          <Link href="/forgot-password" className="text-sm text-primary-600">
+            Forgot password?
+          </Link>
+        </div>
 
         {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
