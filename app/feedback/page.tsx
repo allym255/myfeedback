@@ -11,6 +11,7 @@ type BranchInfo = {
   location: string | null
   brand_color: string | null
   logo_url: string | null
+  google_review_url: string | null
 }
 
 const LABELS = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
@@ -72,7 +73,7 @@ function FeedbackForm() {
       }
       const { data } = await supabase
         .from('branches')
-        .select('id, name, location, brand_color, logo_url')
+        .select('id, name, location, brand_color, logo_url, google_review_url')
         .eq('id', branchId)
         .maybeSingle()
 
@@ -103,6 +104,10 @@ function FeedbackForm() {
   }
 
   const color = branch.brand_color || '#1D9E75'
+  const googleUrl =
+    branch.google_review_url && /^https:\/\//i.test(branch.google_review_url)
+      ? branch.google_review_url
+      : null
 
   const header = (
     <div className="px-6 py-8 text-center text-white" style={{ backgroundColor: color }}>
@@ -149,6 +154,23 @@ function FeedbackForm() {
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Thank you!</h2>
             <p className="text-gray-600">Your feedback helps us improve.</p>
+
+            {googleUrl && (
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <p className="text-gray-700 mb-3">
+                  Want to share your experience on Google too? It helps others find us.
+                </p>
+                <a
+                  href={googleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-5 py-2 rounded-lg border font-medium"
+                  style={{ borderColor: color, color: color }}
+                >
+                  Review us on Google
+                </a>
+              </div>
+            )}
           </div>
           {footer}
         </div>
