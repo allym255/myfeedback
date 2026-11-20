@@ -19,6 +19,7 @@ type BranchRow = {
   company_id: string | null
   brand_color: string | null
   logo_url: string | null
+  google_review_url: string | null
 }
 
 export default function AdminBranchesPage() {
@@ -28,6 +29,7 @@ export default function AdminBranchesPage() {
   const [companies, setCompanies] = useState<CompanyRow[]>([])
   const [branches, setBranches] = useState<BranchRow[]>([])
   const [companyId, setCompanyId] = useState('')
+  const [googleEdits, setGoogleEdits] = useState<Record<string, string>>({})
 
   const [newCompany, setNewCompany] = useState('')
   const [branchName, setBranchName] = useState('')
@@ -43,7 +45,7 @@ export default function AdminBranchesPage() {
       .order('name')
     const { data: branchData } = await supabase
       .from('branches')
-      .select('id, name, location, company_id, brand_color, logo_url')
+      .select('id, name, location, company_id, brand_color, logo_url, google_review_url')
       .order('name')
 
     const companyRows = (companyData ?? []) as unknown as CompanyRow[]
@@ -213,6 +215,32 @@ export default function AdminBranchesPage() {
     setBusy(false)
   }
 
+  const saveGoogleLink = async (branch: BranchRow) => {
+    const value = (googleEdits[branch.id] ?? branch.google_review_url ?? '').trim()
+    if (value && !/^https:\/\//i.test(value)) {
+      setMessage('The Google link must start with https://')
+      return
+    }
+    setBusy(true)
+    setMessage('')
+    const { error } = await supabase
+      .from('branches')
+      .update({ google_review_url: value || null })
+      .eq('id', branch.id)
+    if (error) {
+      setMessage('Could not save Google link: ' + error.message)
+    } else {
+      setMessage(value ? 'Google link saved.' : 'Google link removed.')
+      setGoogleEdits((prev) => {
+        const next = { ...prev }
+        delete next[branch.id]
+        return next
+      })
+      await loadData()
+    }
+    setBusy(false)
+  }
+
   if (loading) {
     return <div className="p-8">Loading...</div>
   }
@@ -321,7 +349,7 @@ export default function AdminBranchesPage() {
               <h3 className="text-lg font-bold">{branch.name}</h3>
               <p className="text-gray-600 mb-3">{branch.location}</p>
 
-              <div className="mb-4 rounded border p-3 bg-gray-50">
+              <div className="mb-3 rounded border p-3 bg-gray-50">
                 <p className="text-xs text-gray-500 mb-2">Logo</p>
                 {branch.logo_url ? (
                   <div className="flex items-center justify-between gap-3">
@@ -356,6 +384,25 @@ export default function AdminBranchesPage() {
                     }}
                   />
                 </label>
+              </div>
+
+              <div className="mb-4 rounded border p-3 bg-gray-50">
+                <p className="text-xs text-gray-500 mb-2">Google review link (optional)</p>
+                <input
+                  value={googleEdits[branch.id] ?? branch.google_review_url ?? ''}
+                  onChange={(e) =>
+                    setGoogleEdits((prev) => ({ ...prev, [branch.id]: e.target.value }))
+                  }
+                  placeholder="https://g.page/r/.../review"
+                  className="w-full border rounded px-2 py-1 text-sm mb-2"
+                />
+                <button
+                  onClick={() => saveGoogleLink(branch)}
+                  disabled={busy}
+                  className="text-sm text-primary-600 font-medium disabled:opacity-50"
+                >
+                  Save Google link
+                </button>
               </div>
 
               {/* eslint-disable-next-line */}
