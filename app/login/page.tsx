@@ -38,7 +38,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <form
         onSubmit={signIn}
         className="w-full max-w-sm bg-white p-8 rounded-xl border border-gray-200"
@@ -80,6 +80,16 @@ export default function LoginPage() {
           {busy ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
+
+      <p className="mt-6 text-xs text-gray-500">
+        <Link href="/privacy" className="underline">
+          Privacy
+        </Link>
+        {' · '}
+        <Link href="/terms" className="underline">
+          Terms
+        </Link>
+      </p>
     </div>
   )
 }
