@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -120,6 +121,20 @@ function FeedbackForm() {
     </div>
   )
 
+  const footer = (
+    <p className="text-center text-xs text-gray-500 pb-5 px-6">
+      No name or account needed
+      {' · '}
+      <Link href="/privacy" className="underline">
+        Privacy
+      </Link>
+      {' · '}
+      <Link href="/terms" className="underline">
+        Terms
+      </Link>
+    </p>
+  )
+
   if (submitted) {
     return (
       <div className="min-h-screen bg-gray-50 px-4 py-8">
@@ -135,6 +150,7 @@ function FeedbackForm() {
             <h2 className="text-xl font-bold text-gray-900 mb-2">Thank you!</h2>
             <p className="text-gray-600">Your feedback helps us improve.</p>
           </div>
+          {footer}
         </div>
       </div>
     )
@@ -178,7 +194,7 @@ function FeedbackForm() {
       <div className="max-w-md mx-auto bg-white rounded-2xl shadow overflow-hidden">
         {header}
 
-        <form onSubmit={submit} className="px-6 pb-6 pt-2">
+        <form onSubmit={submit} className="px-6 pb-4 pt-2">
           <StarRow title="Overall Experience" value={overall} onChange={setOverall} color={color} />
           <StarRow title="Service Speed" value={speed} onChange={setSpeed} color={color} />
           <StarRow title="Staff Friendliness" value={staff} onChange={setStaff} color={color} />
@@ -209,6 +225,8 @@ function FeedbackForm() {
             {submitting ? 'Submitting...' : 'Submit Feedback'}
           </button>
         </form>
+
+        {footer}
       </div>
     </div>
   )
