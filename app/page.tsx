@@ -80,32 +80,26 @@ const steps = [
 
 const features = [
   {
-    icon: '🔔',
     title: 'Instant low-rating alerts',
     text: 'Unhappy guest? Your team gets an email with the rating and comment, so you can put it right before it becomes a public review.',
   },
   {
-    icon: '📬',
     title: 'Weekly summary every Monday',
     text: 'Average rating, how many guests replied compared with last week, the best comments and the ones that need attention.',
   },
   {
-    icon: '📊',
     title: 'A dashboard for every branch',
     text: 'See ratings for service speed, staff friendliness and cleanliness, and spot which shift or branch needs help.',
   },
   {
-    icon: '🎨',
     title: 'Your brand, not ours',
     text: 'Your logo and brand colour on the feedback page, so guests see your restaurant, not a generic form.',
   },
   {
-    icon: '⭐',
     title: 'Google reviews, the honest way',
     text: 'Every guest gets a link to review you on Google, not only the happy ones. Your reviews stay genuine and within Google’s rules.',
   },
   {
-    icon: '🏢',
     title: 'Made for several branches',
     text: 'Each company gets its own private login. Owners see all their branches in one place.',
   },
@@ -132,16 +126,15 @@ const faqs = [
 
 const css = `
 html{scroll-behavior:smooth}
-.mf{--green:#0f3d36;--green2:#16524a;--amber:#f2a900;--cream:#fbf8f3;--ink:#1c1c1a;--muted:#5d625f;--line:#e8e2d8;
+.mf{--green:#0f3d36;--green2:#16524a;--amber:#f2a900;--cream:#ffffff;--soft:#f6f8f7;--ink:#0d1b18;--muted:#56625e;--line:#e3e8e6;
   margin:0;background:var(--cream);color:var(--ink);min-height:100vh;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.55}
 .mf *{box-sizing:border-box}
 .mf a{color:inherit}
-.mf h1,.mf h2,.mf h3{font-family:Georgia,'Times New Roman',serif;line-height:1.12;margin:0;letter-spacing:-0.01em}
+.mf h1,.mf h2,.mf h3{font-family:inherit;font-weight:700;line-height:1.1;margin:0;letter-spacing:-0.025em}
 .mf-wrap{max-width:1080px;margin:0 auto;padding:0 20px}
 .mf-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
-.mf-logo{font-family:Georgia,serif;font-weight:700;font-size:20px;text-decoration:none;display:flex;align-items:center;gap:8px;color:var(--green)}
-.mf-logo span{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--green);color:var(--amber);font-size:16px}
+.mf-logo{font-weight:800;font-size:20px;letter-spacing:-0.02em;text-decoration:none;color:var(--green)}
 .mf-nav-r{display:flex;align-items:center;gap:18px;font-size:15px}
 .mf-nav-r a{text-decoration:none;color:var(--muted)}
 .mf-btn{display:inline-block;text-decoration:none;font-weight:600;padding:13px 22px;border-radius:12px;border:2px solid var(--green);background:var(--green);color:#fff!important;font-size:16px;transition:transform .15s,background .15s}
@@ -159,45 +152,46 @@ html{scroll-behavior:smooth}
 .mf-note{font-size:14px;color:var(--muted);margin-top:16px}
 .mf-visual{position:relative;min-height:440px}
 .mf-tent{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px 22px 18px;width:230px;text-align:center;box-shadow:0 18px 40px #0f3d3622;transform:rotate(-4deg);position:absolute;left:28px;top:96px;z-index:1}
-.mf-tent b{display:block;font-family:Georgia,serif;font-size:18px;color:var(--green);margin-bottom:10px}
+.mf-tent b{display:block;font-size:17px;font-weight:700;color:var(--green);margin-bottom:10px}
 .mf-qr{width:100%;height:auto;display:block}
 .mf-tent small{display:block;margin-top:10px;color:var(--muted);font-size:13px}
 .mf-phone{position:absolute;z-index:2;right:0;bottom:0;width:190px;background:#fff;border:6px solid #1c1c1a;border-radius:28px;padding:14px 12px;box-shadow:0 20px 44px #0003;transform:rotate(3deg)}
 .mf-phone .top{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;margin-bottom:10px}
 .mf-phone .dot{width:22px;height:22px;border-radius:50%;background:var(--green);display:inline-block}
 .mf-phone .row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:7px}
-.mf-phone .st{color:var(--amber);letter-spacing:1px;font-size:13px}
+.mf-phone .st{color:var(--green);font-weight:700;font-size:12px}
 .mf-phone .go{margin-top:12px;background:var(--green);color:#fff;text-align:center;border-radius:10px;padding:8px;font-size:12px;font-weight:600}
 .mf-alert{position:absolute;z-index:3;left:0;top:0;width:250px;background:#fff;border:1px solid var(--line);border-left:5px solid #d64545;border-radius:14px;padding:12px 14px;box-shadow:0 14px 30px #0002;font-size:13px;transform:rotate(-2deg)}
 .mf-alert b{display:block;color:#b83030;margin-bottom:2px}
 .mf-alert i{color:var(--muted)}
 .mf-alert em{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:6px}
 .mf-sec{padding:72px 0}
-.mf-sec.white{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.mf-sec.white{background:var(--soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .mf-sec h2{font-size:clamp(28px,4vw,40px);text-align:center}
 .mf-sub{text-align:center;color:var(--muted);max-width:560px;margin:14px auto 44px;font-size:17px}
 .mf-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.mf-card{background:var(--cream);border:1px solid var(--line);border-radius:18px;padding:26px}
-.mf-sec.white .mf-card{background:var(--cream)}
-.mf-card h3{font-size:21px;margin:12px 0 8px}
+.mf-card{background:var(--soft);border:1px solid var(--line);border-radius:18px;padding:26px}
+.mf-sec.white .mf-card{background:#fff}
+.mf-card h3{font-size:19px;margin:12px 0 8px;letter-spacing:-0.015em}
 .mf-card p{margin:0;color:var(--muted);font-size:16px}
-.mf-num{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--green);color:var(--amber);font-weight:700;font-family:Georgia,serif}
-.mf-ico{font-size:28px}
+.mf-num{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--green);border-bottom:2px solid var(--amber);padding-bottom:4px}
 .mf-feat{background:#fff}
 .mf-price{background:var(--green);color:#fff}
 .mf-price h2{color:#fff}
 .mf-price .mf-sub{color:#cfe3de}
 .mf-pcard{max-width:460px;margin:0 auto;background:#fff;color:var(--ink);border-radius:24px;padding:34px 30px;text-align:center}
-.mf-amt{font-family:Georgia,serif;font-size:60px;font-weight:700;color:var(--green);line-height:1}
-.mf-amt small{font-size:18px;color:var(--muted);font-family:-apple-system,Segoe UI,sans-serif;font-weight:500}
+.mf-amt{font-size:60px;letter-spacing:-0.03em;font-weight:700;color:var(--green);line-height:1}
+.mf-amt small{font-size:18px;color:var(--muted);font-weight:500;letter-spacing:0}
 .mf-free{display:inline-block;background:#f2a90026;color:#7a5400;font-weight:700;border-radius:99px;padding:6px 14px;font-size:14px;margin-bottom:14px}
 .mf-list{list-style:none;padding:0;margin:22px 0 26px;text-align:left}
-.mf-list li{padding:7px 0 7px 30px;position:relative;font-size:16px;border-bottom:1px solid var(--line)}
+.mf-list li{padding:10px 0;font-size:16px;border-bottom:1px solid var(--line)}
 .mf-list li:last-child{border-bottom:0}
-.mf-list li:before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:800}
 .mf-faq{max-width:720px;margin:0 auto}
-.mf-faq details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:12px}
-.mf-faq summary{cursor:pointer;font-weight:600;font-size:17px}
+.mf-faq details{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:12px}
+.mf-faq summary{cursor:pointer;font-weight:600;font-size:17px;list-style:none}
+.mf-faq summary::-webkit-details-marker{display:none}
+.mf-faq summary:after{content:'+';float:right;color:var(--muted);font-weight:400}
+.mf-faq details[open] summary:after{content:'−'}
 .mf-faq p{margin:10px 0 0;color:var(--muted)}
 .mf-final{background:var(--green);color:#fff;text-align:center;padding:72px 20px}
 .mf-final h2{color:#fff;font-size:clamp(28px,4vw,40px);max-width:640px;margin:0 auto 14px}
@@ -226,7 +220,7 @@ export default function Home() {
       <div className="mf-wrap">
         <nav className="mf-nav">
           <a className="mf-logo" href="#top">
-            <span>★</span> My Feedback
+            My Feedback
           </a>
           <div className="mf-nav-r">
             <a className="hide-sm" href="#how">How it works</a>
@@ -252,7 +246,7 @@ export default function Home() {
 
           <div className="mf-visual" aria-hidden="true">
             <div className="mf-alert">
-              <b>⚠ New 2★ rating</b>
+              <b>New 2-star rating</b>
               <i>“Waited too long for our food.”</i>
               <em>Example alert email · sent to your team instantly</em>
             </div>
@@ -263,10 +257,10 @@ export default function Home() {
             </div>
             <div className="mf-phone">
               <div className="top"><span className="dot" /> Your Restaurant</div>
-              <div className="row"><span>Overall</span><span className="st">★★★★★</span></div>
-              <div className="row"><span>Speed</span><span className="st">★★★★☆</span></div>
-              <div className="row"><span>Friendly staff</span><span className="st">★★★★★</span></div>
-              <div className="row"><span>Cleanliness</span><span className="st">★★★★★</span></div>
+              <div className="row"><span>Overall</span><span className="st">5 / 5</span></div>
+              <div className="row"><span>Speed</span><span className="st">4 / 5</span></div>
+              <div className="row"><span>Friendly staff</span><span className="st">5 / 5</span></div>
+              <div className="row"><span>Cleanliness</span><span className="st">5 / 5</span></div>
               <div className="go">Send feedback</div>
             </div>
           </div>
@@ -296,7 +290,6 @@ export default function Home() {
           <div className="mf-grid3">
             {features.map((f) => (
               <div className="mf-card mf-feat" key={f.title}>
-                <span className="mf-ico">{f.icon}</span>
                 <h3>{f.title}</h3>
                 <p>{f.text}</p>
               </div>
